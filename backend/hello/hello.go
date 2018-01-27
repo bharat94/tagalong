@@ -1,7 +1,10 @@
 package hello
 
-import "fmt"
+import (
+    "fmt"
+    "github/tagalong/backend/stringutil"
+)
 
 func PrintHello() {
-    fmt.Printf("Hello, world.\n")
+    fmt.Printf(stringutil.Reverse("!oG ,olleH"))
 }
