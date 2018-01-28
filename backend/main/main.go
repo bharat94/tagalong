@@ -18,12 +18,20 @@ package main
 //   curl http://localhost:3000/disconnect
 
 import (
+    "fmt"
 	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"time"
 	_ "github.com/lib/pq"
+)
+
+const (
+    host = "localhost"
+    user = "postgres"
+    dbname = "postgres"
+    sslmode = "disable"
 )
 
 type server struct {
@@ -106,7 +114,8 @@ func (s *server) handlerDisconnect(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	db, err := sql.Open("postgres", "user=postgres sslmode=disable")
+    psqlInfo := fmt.Sprintf("user=%s host=%s dbname=%s sslmode=%s", user, host, dbname, sslmode)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal(err)
 	}
