@@ -6,30 +6,43 @@ import externalStyles from './src/pages/styles.js'
 export default class App extends Component {
   constructor (props) {
     super(props)
-    this.state = {
-      cards: [
-            {'name': 'Jane', 
-              'uri': 'https://getwetsurf.com/wp-content/uploads/2015/09/staff-placeholder-female.jpg', 
-              'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'},
-            {'name': 'John', 
-              'uri': 'https://getwetsurf.com/wp-content/uploads/2015/09/staff-placeholder-female.jpg', 
-              'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'},
-            {'name': 'Doe', 
-              'uri': 'https://getwetsurf.com/wp-content/uploads/2015/09/staff-placeholder-female.jpg', 
-              'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'},
-            ],
-      swipedAllCards: false,
-      swipeDirection: '',
-      isSwipingBack: false,
-      cardIndex: 0
-    }
+    this.state = { cards: [{'uri':'./src/pages/user.png','fname':'Jamie','lname':'Franco','decription':'I love metal!'},{'uri':'./src/pages/user.png','fname':'a','lname':'a','decription':'a'}],
+            swipedAllCards: false,
+            swipeDirection: '',
+            isSwipingBack: false,
+            cardIndex: 0 }
+  }
+
+  componentDidMount() {
+    fetch('http://138.16.51.208:3000/getRemainingUsersForEvent', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: "16",
+        event_id: "1"
+      }),
+    })
+    .then(response => response.json())
+    .then(data => this.setState({ cards: data,
+                    swipedAllCards: false,
+                    swipeDirection: '',
+                    isSwipingBack: false,
+                    cardIndex: 0 }))
+    .catch((error)=>{
+       console.log("Api call error");
+       alert(error.message);
+    });
+    
   }
 
   renderCard = card => {
     return (
       <View style={styles.card}>
-        <Image source={{uri:card.uri}} style={{marginTop: 50, height:200, width:200, borderRadius:100, justifyContent: 'center', alignItems: 'center', marginLeft: 65}}/>
-        <Text style={styles.nameStyle}>{card.name}</Text>
+        <Image source={require('./src/pages/user.png')} style={{marginTop: 50, height:200, width:200, borderRadius:100, justifyContent: 'center', alignItems: 'center', marginLeft: 65}}/>
+        <Text style={styles.nameStyle}>{card.fname} {card.lname}</Text>
         <Text style={styles.descriptionStyle}>{card.description}</Text>
       </View>
     )
