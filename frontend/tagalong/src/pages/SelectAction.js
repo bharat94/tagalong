@@ -2,20 +2,29 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { DrawerNavigator } from 'react-navigation'
 
-import Profile from './src/pages/Profile.js'
-import MyEvents from './src/pages/MyEvents.js'
-import SelectEvent from './src/pages/SelectEvent.js'
+import Profile from './Profile.js'
+import MyEvents from './MyEvents.js'
+import SelectEvent from './SelectEvent.js'
 
 const Navigation = DrawerNavigator(
 	{
 		"Select Event": {
-			screen: SelectEvent
+			screen: SelectEvent,
+			navigationOptions: {
+     			drawerLabel: 'Select Events',
+   			}
 		},
 		Profile: {
-			screen: Profile
+			screen: Profile,
+			navigationOptions: {
+     			drawerLabel: 'Profile',
+   			}
 		},
 		"My Events": {
-			screen: MyEvents
+			screen: MyEvents,
+			navigationOptions: {
+     			drawerLabel: 'My Events',
+   			}
 		}
 	}
 )

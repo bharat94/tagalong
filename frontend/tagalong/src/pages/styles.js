@@ -6,7 +6,7 @@ export default StyleSheet.create({
   },
   navbar: {
     height: 80,
-    backgroundColor: 'cadetblue',
+    backgroundColor: 'blue',
     alignItems: 'center',
     justifyContent: 'center'
   }
