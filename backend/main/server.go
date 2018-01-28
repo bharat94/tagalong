@@ -2,7 +2,7 @@ package main
 
 import (
 "fmt"
-//"encoding/json"
+"encoding/json"
 "context"
 "time"
 "database/sql"
@@ -176,15 +176,24 @@ func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 
 // register a user for an event
 func (s *server) handlerRegisterUserForEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+    decoder := json.NewDecoder(r.Body)
+    var e event
+    errVal := decoder.Decode(&e)
+    if errVal != nil {
+        panic(errVal)
+    }
+    defer r.Body.Close()
+    log.Println(e)
+
+    /*
+    rows, err := s.db.Query("SELECT users.user_id, users.firstname, users.lastname, users.image from users inner join event_users on users.user_id = event_users.user_id where event_users.event_id = ?", eventId)
 
 	// slow 5 seconds query
 	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
 	if err != nil {
 		log.Println("[ERROR]", err)
 		w.WriteHeader(http.StatusBadRequest)
-	}
+	}*/
 
 	w.Write([]byte("ok"))
 }
