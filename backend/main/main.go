@@ -28,14 +28,14 @@ import (
 // configs for postgres connection
 // do not change
 const (
-    host = "localhost"
-    user = "postgres"
+    dbhost = "localhost"
+    dbuser = "postgres"
     dbname = "postgres"
-    sslmode = "disable"
+    dbsslmode = "disable"
 )
 
 func main() {
-    psqlInfo := fmt.Sprintf("user=%s host=%s dbname=%s sslmode=%s", user, host, dbname, sslmode)
+    psqlInfo := fmt.Sprintf("user=%s host=%s dbname=%s sslmode=%s", dbuser, dbhost, dbname, dbsslmode)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal(err)
@@ -45,9 +45,18 @@ func main() {
 	s := server{db: db}
 
 	http.HandleFunc("/", s.handler)
+	http.HandleFunc("/connect", s.handlerConnect)
 	http.HandleFunc("/addUser", s.handlerAddUser)
 	http.HandleFunc("/removeUser", s.handlerRemoveUser)
 	http.HandleFunc("/getUsers", s.handlerGetUsers)
+	http.HandleFunc("/addEvent", s.handlerAddEvent)
+	http.HandleFunc("/removeEvent", s.handlerRemoveEvent)
+	http.HandleFunc("/getEvents", s.handlerGetEvents)
+	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent)
+	http.HandleFunc("/unregisterUserForEvent", s.handlerUnregisterUserForEvent)
+	http.HandleFunc("/getRemainingUsersForEvent", s.handlerGetRemainingUsersForEvent)
+	http.HandleFunc("/like", s.handleLike)
+	http.HandleFunc("/getGroup", s.handlerGetGroup)
 	http.HandleFunc("/disconnect", s.handlerDisconnect)
 	log.Println("Starting server on :3000...")
 	log.Fatal(http.ListenAndServe(":3000", nil))
