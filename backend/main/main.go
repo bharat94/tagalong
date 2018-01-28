@@ -56,7 +56,7 @@ func main() {
 	http.HandleFunc("/getEvents", s.handlerGetEvents) //done
 	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent)
 	http.HandleFunc("/getRemainingUsersForEvent", s.handlerGetRemainingUsersForEvent)
-	http.HandleFunc("/like", s.handleLike)
+	http.HandleFunc("/like", s.handleLike) //done
 	http.HandleFunc("/getGroup", s.handlerGetGroup)
 	http.HandleFunc("/disconnect", s.handlerDisconnect)
 	log.Println("Starting server on :3000...")
