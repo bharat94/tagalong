@@ -134,7 +134,7 @@ func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
 	_, err = stmt.Exec(e.Name, e.Description, e.Image, e.Location)
 
 	if err != nil {
-	log.Fatal(err)
+	    log.Fatal(err)
 	}
 	/*w.Header().Set("Content-Type", "application/json")
 	structString := fmt.Sprintf("%+v\n", u)
@@ -188,38 +188,20 @@ func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 // register a user for an event
 func (s *server) handlerRegisterUserForEvent(w http.ResponseWriter, r *http.Request) {
     decoder := json.NewDecoder(r.Body)
-    var e event
+    var e event_users
     errVal := decoder.Decode(&e)
     if errVal != nil {
         panic(errVal)
     }
     defer r.Body.Close()
-    log.Println(e)
 
-    /*
-    rows, err := s.db.Query("SELECT users.user_id, users.firstname, users.lastname, users.image from users inner join event_users on users.user_id = event_users.user_id where event_users.event_id = ?", eventId)
+    rows, err := s.db.Query("INSERT INTO event_users (event_id, user_id) VALUES ($1, $2);", e.EventId, e.UserId)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}*/
+    defer rows.Close()
 
-	w.Write([]byte("ok"))
-}
-
-// Unregister a user for an event
-func (s *server) handlerUnregisterUserForEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
-
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    if err != nil {
+        log.Fatal(err)
+    }
 
 	w.Write([]byte("ok"))
 }

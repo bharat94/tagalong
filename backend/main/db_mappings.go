@@ -9,9 +9,15 @@ type user struct {
 }
 
 type event struct {
-	Id string `json:"fname,omitempty"`
+	Id string `json:"id,omitempty"`
 	Name string `json:"name"`
 	Description string `json:"description"`
 	Image string `json:"image"`
 	Location string `json:"location"`
+}
+
+type event_users struct {
+    EventUserId string `json:"event_user_id,omitempty"`
+    EventId string `json:"event_id"`
+    UserId string `json:"user_id"`
 }
