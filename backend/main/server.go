@@ -227,21 +227,6 @@ func (s *server) handlerRegisterUserForEvent(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte("ok"))
 }
 
-// get the list of users for an event not rated by the user yet
-func (s *server) handlerGetRemainingUsersForEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
-
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	w.Write([]byte("ok"))
-}
-
 // handle a like correctly (Event, User1, User2)
 func (s *server) handleLike(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
@@ -268,19 +253,41 @@ func (s *server) handleLike(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(structString))
 }
 
-// get the group (matches) for an user
-func (s *server) handlerGetGroup(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+// get the list of users for an event not rated by the user yet
+func (s *server) handlerGetRemainingUsersForEvent(w http.ResponseWriter, r *http.Request) {
+    decoder := json.NewDecoder(r.Body)
+    var e event_users
+    errVal := decoder.Decode(&e)
+    if errVal != nil {
+        panic(errVal)
+    }
+    defer r.Body.Close()
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    remainingUsers := []user{}
+    rows, err := s.db.Query("select * from users where user_id != $1 and user_id in (select distinct user_id from event_users where event_id = $2) and user_id not in (select second_user_id from likes where event_id = $3 and first_user_id = $4);", e.UserId, e.EventId, e.EventId, e.UserId)
 
-	w.Write([]byte("ok"))
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        u := user{}
+        err := rows.Scan(&u.Id, &u.Fname, &u.Lname, &u.Image)
+        if err != nil {
+            log.Fatal(err)
+        }
+        remainingUsers = append(remainingUsers, u)
+    }
+    log.Println(remainingUsers)
+    err = rows.Err()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", remainingUsers)
+	w.Write([]byte(structString))
 }
 
 func (s *server) handlerGetUserFromId(w http.ResponseWriter, r *http.Request) {
