@@ -2,7 +2,7 @@ package main
 
 import (
 "fmt"
-"encoding/json"
+//"encoding/json"
 "context"
 "time"
 "database/sql"
@@ -90,21 +90,30 @@ func (s *server) handlerRemoveUser(w http.ResponseWriter, r *http.Request) {
 
 // return all the users in the db
 func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
-
-	res, err := s.db.ExecContext(ctx, "SELECT * FROM users")
+	u_list := []user{}
+	rows, err := s.db.Query("SELECT * FROM users")
 	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		u := user{}
+		err := rows.Scan(&u.id, &u.fname, &u.lname, &u.image)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(u)
+		u_list = append(u_list, u)
+		log.Println(u_list)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	jsonBody, err := json.Marshal(res)
-	if err != nil {
-		http.Error(w, "Error converting results to json",
-			http.StatusInternalServerError)
-	}
-	w.Write(jsonBody)
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u_list)
+	w.Write([]byte(structString))
 }
 
 // add a new event to the events table in the db
@@ -139,17 +148,30 @@ func (s *server) handlerRemoveEvent(w http.ResponseWriter, r *http.Request) {
 
 // return all the events in the db
 func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
-
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
+	e_list := []event{}
+	rows, err := s.db.Query("SELECT * FROM events")
 	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		e := event{}
+		err := rows.Scan(&e.id, &e.name, &e.description, &e.image, &e.location)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(e)
+		e_list = append(e_list, e)
+		log.Println(e_list)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e_list)
+	w.Write([]byte(structString))
 }
 
 // register a user for an event
