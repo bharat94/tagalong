@@ -16,6 +16,12 @@ type event struct {
 	Location string `json:"location"`
 }
 
+type event_users struct {
+    EventUserId string `json:"event_user_id,omitempty"`
+    EventId string `json:"event_id"`
+    UserId string `json:"user_id"`
+}
+
 type like struct {
 	LikeId string `json:"like_id,omitempty"`
 	EventId string `json:"event_id"`

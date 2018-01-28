@@ -55,7 +55,6 @@ func main() {
 	http.HandleFunc("/removeEvent", s.handlerRemoveEvent)
 	http.HandleFunc("/getEvents", s.handlerGetEvents) //done
 	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent)
-	http.HandleFunc("/unregisterUserForEvent", s.handlerUnregisterUserForEvent)
 	http.HandleFunc("/getRemainingUsersForEvent", s.handlerGetRemainingUsersForEvent)
 	http.HandleFunc("/like", s.handleLike) //done
 	http.HandleFunc("/getGroup", s.handlerGetGroup)
