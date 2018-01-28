@@ -9,7 +9,7 @@ type user struct {
 }
 
 type event struct {
-	Id string `json:"fname,omitempty"`
+	Id string `json:"id,omitempty"`
 	Name string `json:"name"`
 	Description string `json:"description"`
 	Image string `json:"image"`

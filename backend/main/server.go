@@ -65,16 +65,20 @@ func (s *server) handlerAddUser(w http.ResponseWriter, r *http.Request) {
     }
     defer r.Body.Close()
     log.Println(u)
-	stmt, _ := s.db.Prepare("INSERT INTO users (firstname, lastname, image) VALUES ($1, $2, $3);")
-	_, err = stmt.Exec(u.Fname, u.Lname, u.Image)
 
-	if err != nil {
-	log.Fatal(err)
+    sqlStatement := `  
+	INSERT INTO users (firstname, lastname, image) 
+	VALUES ($1, $2, $3)  
+	RETURNING user_id`  
+
+	err = s.db.QueryRow(sqlStatement, u.Fname, u.Lname, u.Image).Scan(&u.Id)  
+	if err != nil {  
+	  panic(err)
 	}
-	/*w.Header().Set("Content-Type", "application/json")
+
+	w.Header().Set("Content-Type", "application/json")
 	structString := fmt.Sprintf("%+v\n", u)
-	w.Write([]byte(structString))*/
-	w.Write([]byte("ok"))
+	w.Write([]byte(structString))
 }
 
 // remove a user from the users table in the db
@@ -129,17 +133,20 @@ func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
         panic(err)
     }
     defer r.Body.Close()
-    log.Println(e)
-	stmt, _ := s.db.Prepare("INSERT INTO events (name, description, image, location) VALUES ($1, $2, $3, $4);")
-	_, err = stmt.Exec(e.Name, e.Description, e.Image, e.Location)
 
-	if err != nil {
-	log.Fatal(err)
+    sqlStatement := `  
+	INSERT INTO events (name, description, image, location) 
+	VALUES ($1, $2, $3, $4)  
+	RETURNING event_id`  
+
+	err = s.db.QueryRow(sqlStatement, e.Name, e.Description, e.Image, e.Location).Scan(&e.Id)  
+	if err != nil {  
+	  panic(err)
 	}
-	/*w.Header().Set("Content-Type", "application/json")
-	structString := fmt.Sprintf("%+v\n", u)
-	w.Write([]byte(structString))*/
-	w.Write([]byte("ok"))
+	
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e)
+	w.Write([]byte(structString))
 }
 
 // remove an event from the events table in the db
