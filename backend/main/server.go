@@ -83,16 +83,23 @@ func (s *server) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 
 // remove a user from the users table in the db
 func (s *server) handlerRemoveUser(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    _, err = s.db.Exec("DELETE FROM users WHERE user_id = $1;", m["user_id"])
+    if err != nil {
+        log.Println("[ERROR]", err)
+    } else {
+        log.Println("User deleted")
+    }
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("ok"))
 }
 
@@ -151,16 +158,23 @@ func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
 
 // remove an event from the events table in the db
 func (s *server) handlerRemoveEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    _, err = s.db.Exec("DELETE FROM events WHERE event_id = $1;", m["event_id"])
+    if err != nil {
+        log.Println("[ERROR]", err)
+    } else {
+        log.Println("Event deleted")
+    }
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("ok"))
 }
 
@@ -267,6 +281,174 @@ func (s *server) handlerGetGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("ok"))
+}
+
+func (s *server) handlerGetUserFromId(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	u := user{}
+	rows, err := s.db.Query("SELECT * FROM users WHERE user_id=$1", m["user_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	if rows.Next() {
+		err := rows.Scan(&u.Id, &u.Fname, &u.Lname, &u.Image)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u)
+	if rowsFound {
+		w.Write([]byte(structString))
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	}
+}
+
+func (s *server) handlerGetEventFromId(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	e := event{}
+	rows, err := s.db.Query("SELECT * FROM events WHERE event_id=$1", m["event_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	if rows.Next() {
+		err := rows.Scan(&e.Id, &e.Name, &e.Description, &e.Image, &e.Location)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e)
+	if rowsFound {
+		w.Write([]byte(structString))
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	}
+}
+
+func (s *server) handlerGetUsersForEvent(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	u_list := []user{}
+	rows, err := s.db.Query("SELECT user_id FROM event_users WHERE event_id=$1", m["event_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	for rows.Next() {
+		u := user{}
+		err = rows.Scan(&u.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+			u_list = append(u_list, u)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(u_list)
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u_list)
+	if rowsFound != true {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	} else {
+		w.Write([]byte(structString))
+	}
+}
+
+func (s *server) handlerGetEventsForUser(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	e_list := []event{}
+	rows, err := s.db.Query("SELECT event_id FROM event_users WHERE user_id=$1", m["user_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	for rows.Next() {
+		e := event{}
+		err = rows.Scan(&e.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+			e_list = append(e_list, e)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(e_list)
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e_list)
+	if rowsFound != true {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	} else {
+		w.Write([]byte(structString))
+	}
 }
 
 func (s *server) handlerConnect(w http.ResponseWriter, r *http.Request) {
