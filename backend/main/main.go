@@ -41,7 +41,35 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
-func (s *server) handlerCtx(w http.ResponseWriter, r *http.Request) {
+func (s *server) handlerAddUser(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+
+	// slow 5 seconds query
+	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
+	if err != nil {
+		log.Println("[ERROR]", err)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	w.Write([]byte("ok"))
+}
+
+func (s *server) handlerRemoveUser(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+
+	// slow 5 seconds query
+	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
+	if err != nil {
+		log.Println("[ERROR]", err)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	w.Write([]byte("ok"))
+}
+
+func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
 
@@ -87,7 +115,9 @@ func main() {
 	s := server{db: db}
 
 	http.HandleFunc("/", s.handler)
-	http.HandleFunc("/ctx", s.handlerCtx)
+	http.HandleFunc("/addUser", s.handlerAddUser)
+	http.HandleFunc("/removeUser", s.handlerRemoveUser)
+	http.HandleFunc("/getUsers", s.handlerGetUsers)
 	http.HandleFunc("/disconnect", s.handlerDisconnect)
 	log.Println("Starting server on :3000...")
 	log.Fatal(http.ListenAndServe(":3000", nil))
