@@ -8,7 +8,7 @@ import SelectEvent from './SelectEvent.js'
 
 const Navigation = DrawerNavigator(
 	{
-		"Select Event": {
+		SelectEvent: {
 			screen: SelectEvent,
 			navigationOptions: {
      			drawerLabel: 'Select Events',

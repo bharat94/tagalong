@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import Swiper from 'react-native-deck-swiper'
 import {Button, StyleSheet, Text, View, Image} from 'react-native'
-import externalStyles from './src/pages/styles.js'
+import externalStyles from './styles.js'
 
 export default class App extends Component {
   constructor (props) {
