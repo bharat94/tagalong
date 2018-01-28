@@ -2,13 +2,13 @@ package main
 
 import (
 "fmt"
-//"encoding/json"
+"encoding/json"
 "context"
 "time"
 "database/sql"
 "net/http"
 "log"
-"github.com/gorilla/mux"
+//"github.com/gorilla/mux"
 _ "github.com/lib/pq"
 )
 
@@ -56,35 +56,50 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 
 // add a new user to the users table in the db
 func (s *server) handlerAddUser(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
 
-	vars := mux.Vars(r)
-	log.Println("Parsing id : ", vars["id"])
-    u := user{vars["id"], vars["fname"], vars["lname"], vars["image"], vars["group"]}
-    fmt.Println(u)
+	decoder := json.NewDecoder(r.Body)
+    var u user
+    err := decoder.Decode(&u)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(u)
 
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+    sqlStatement := `  
+	INSERT INTO users (firstname, lastname, image) 
+	VALUES ($1, $2, $3)  
+	RETURNING user_id`  
+
+	err = s.db.QueryRow(sqlStatement, u.Fname, u.Lname, u.Image).Scan(&u.Id)  
+	if err != nil {  
+	  panic(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u)
+	w.Write([]byte(structString))
 }
 
 // remove a user from the users table in the db
 func (s *server) handlerRemoveUser(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    _, err = s.db.Exec("DELETE FROM users WHERE user_id = $1;", m["user_id"])
+    if err != nil {
+        log.Println("[ERROR]", err)
+    } else {
+        log.Println("User deleted")
+    }
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("ok"))
 }
 
@@ -98,7 +113,7 @@ func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	for rows.Next() {
 		u := user{}
-		err := rows.Scan(&u.id, &u.fname, &u.lname, &u.image)
+		err := rows.Scan(&u.Id, &u.Fname, &u.Lname, &u.Image)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -118,31 +133,48 @@ func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 
 // add a new event to the events table in the db
 func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var e event
+    err := decoder.Decode(&e)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+    sqlStatement := `  
+	INSERT INTO events (name, description, image, location) 
+	VALUES ($1, $2, $3, $4)  
+	RETURNING event_id`  
+
+	err = s.db.QueryRow(sqlStatement, e.Name, e.Description, e.Image, e.Location).Scan(&e.Id)  
+	if err != nil {  
+	  panic(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e)
+	w.Write([]byte(structString))
 }
 
 // remove an event from the events table in the db
 func (s *server) handlerRemoveEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    _, err = s.db.Exec("DELETE FROM events WHERE event_id = $1;", m["event_id"])
+    if err != nil {
+        log.Println("[ERROR]", err)
+    } else {
+        log.Println("Event deleted")
+    }
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("ok"))
 }
 
@@ -156,7 +188,7 @@ func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	for rows.Next() {
 		e := event{}
-		err := rows.Scan(&e.id, &e.name, &e.description, &e.image, &e.location)
+		err := rows.Scan(&e.Id, &e.Name, &e.Description, &e.Image, &e.Location)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -176,30 +208,21 @@ func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 
 // register a user for an event
 func (s *server) handlerRegisterUserForEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+    decoder := json.NewDecoder(r.Body)
+    var e event_users
+    errVal := decoder.Decode(&e)
+    if errVal != nil {
+        panic(errVal)
+    }
+    defer r.Body.Close()
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    rows, err := s.db.Query("INSERT INTO event_users (event_id, user_id) VALUES ($1, $2);", e.EventId, e.UserId)
 
-	w.Write([]byte("ok"))
-}
+    defer rows.Close()
 
-// Unregister a user for an event
-func (s *server) handlerUnregisterUserForEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
-
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
-	}
+    if err != nil {
+        log.Fatal(err)
+    }
 
 	w.Write([]byte("ok"))
 }
@@ -221,17 +244,28 @@ func (s *server) handlerGetRemainingUsersForEvent(w http.ResponseWriter, r *http
 
 // handle a like correctly (Event, User1, User2)
 func (s *server) handleLike(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var l like
+    err := decoder.Decode(&l)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(l)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+    sqlStatement := `  
+	INSERT INTO likes (event_id, first_user_id, second_user_id) 
+	VALUES ($1, $2, $3)  
+	RETURNING like_id`  
+
+	err = s.db.QueryRow(sqlStatement, l.EventId, l.FirstUserId, l.SecondUserId).Scan(&l.LikeId)  
+	if err != nil {  
+	  panic(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", l)
+	w.Write([]byte(structString))
 }
 
 // get the group (matches) for an user
@@ -247,6 +281,174 @@ func (s *server) handlerGetGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("ok"))
+}
+
+func (s *server) handlerGetUserFromId(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	u := user{}
+	rows, err := s.db.Query("SELECT * FROM users WHERE user_id=$1", m["user_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	if rows.Next() {
+		err := rows.Scan(&u.Id, &u.Fname, &u.Lname, &u.Image)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u)
+	if rowsFound {
+		w.Write([]byte(structString))
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	}
+}
+
+func (s *server) handlerGetEventFromId(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	e := event{}
+	rows, err := s.db.Query("SELECT * FROM events WHERE event_id=$1", m["event_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	if rows.Next() {
+		err := rows.Scan(&e.Id, &e.Name, &e.Description, &e.Image, &e.Location)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e)
+	if rowsFound {
+		w.Write([]byte(structString))
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	}
+}
+
+func (s *server) handlerGetUsersForEvent(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	u_list := []user{}
+	rows, err := s.db.Query("SELECT user_id FROM event_users WHERE event_id=$1", m["event_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	for rows.Next() {
+		u := user{}
+		err = rows.Scan(&u.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+			u_list = append(u_list, u)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(u_list)
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u_list)
+	if rowsFound != true {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	} else {
+		w.Write([]byte(structString))
+	}
+}
+
+func (s *server) handlerGetEventsForUser(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+    var m map[string]string
+    err := decoder.Decode(&m)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(m)
+
+
+	e_list := []event{}
+	rows, err := s.db.Query("SELECT event_id FROM event_users WHERE user_id=$1", m["user_id"])
+	if err != nil {
+	log.Fatal(err)
+	}
+	defer rows.Close()
+	rowsFound := false
+	for rows.Next() {
+		e := event{}
+		err = rows.Scan(&e.Id)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			rowsFound = true
+			e_list = append(e_list, e)
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(e_list)
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", e_list)
+	if rowsFound != true {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(nil)
+	} else {
+		w.Write([]byte(structString))
+	}
 }
 
 func (s *server) handlerConnect(w http.ResponseWriter, r *http.Request) {

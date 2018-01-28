@@ -48,16 +48,19 @@ func main() {
 
 	http.HandleFunc("/", s.handler)
 	http.HandleFunc("/connect", s.handlerConnect)
-	http.HandleFunc("/addUser", s.handlerAddUser)
-	http.HandleFunc("/removeUser", s.handlerRemoveUser)
-	http.HandleFunc("/getUsers", s.handlerGetUsers)
-	http.HandleFunc("/addEvent", s.handlerAddEvent)
-	http.HandleFunc("/removeEvent", s.handlerRemoveEvent)
-	http.HandleFunc("/getEvents", s.handlerGetEvents)
-	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent)
-	http.HandleFunc("/unregisterUserForEvent", s.handlerUnregisterUserForEvent)
+	http.HandleFunc("/addUser", s.handlerAddUser) //done
+	http.HandleFunc("/removeUser", s.handlerRemoveUser) //done
+	http.HandleFunc("/getUsers", s.handlerGetUsers) //done
+	http.HandleFunc("/addEvent", s.handlerAddEvent) //done
+	http.HandleFunc("/removeEvent", s.handlerRemoveEvent) //done
+	http.HandleFunc("/getEvents", s.handlerGetEvents) //done
+	http.HandleFunc("/getUserFromId", s.handlerGetUserFromId) //done
+	http.HandleFunc("/getEventFromId", s.handlerGetEventFromId) //done 
+	http.HandleFunc("/getUsersForEvent", s.handlerGetUsersForEvent) //done
+	http.HandleFunc("/getEventsForUser", s.handlerGetEventsForUser) //done
+	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent) //done
 	http.HandleFunc("/getRemainingUsersForEvent", s.handlerGetRemainingUsersForEvent)
-	http.HandleFunc("/like", s.handleLike)
+	http.HandleFunc("/like", s.handleLike) //done
 	http.HandleFunc("/getGroup", s.handlerGetGroup)
 	http.HandleFunc("/disconnect", s.handlerDisconnect)
 	log.Println("Starting server on :3000...")
