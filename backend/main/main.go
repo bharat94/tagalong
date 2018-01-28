@@ -50,10 +50,10 @@ func main() {
 	http.HandleFunc("/connect", s.handlerConnect)
 	http.HandleFunc("/addUser", s.handlerAddUser)
 	http.HandleFunc("/removeUser", s.handlerRemoveUser)
-	http.HandleFunc("/getUsers", s.handlerGetUsers)
+	http.HandleFunc("/getUsers", s.handlerGetUsers) //done
 	http.HandleFunc("/addEvent", s.handlerAddEvent)
 	http.HandleFunc("/removeEvent", s.handlerRemoveEvent)
-	http.HandleFunc("/getEvents", s.handlerGetEvents)
+	http.HandleFunc("/getEvents", s.handlerGetEvents) //done
 	http.HandleFunc("/registerUserForEvent", s.handlerRegisterUserForEvent)
 	http.HandleFunc("/unregisterUserForEvent", s.handlerUnregisterUserForEvent)
 	http.HandleFunc("/getRemainingUsersForEvent", s.handlerGetRemainingUsersForEvent)
