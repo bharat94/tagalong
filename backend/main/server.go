@@ -8,7 +8,7 @@ import (
 "database/sql"
 "net/http"
 "log"
-"github.com/gorilla/mux"
+//"github.com/gorilla/mux"
 _ "github.com/lib/pq"
 )
 
@@ -56,20 +56,24 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 
 // add a new user to the users table in the db
 func (s *server) handlerAddUser(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
 
-	vars := mux.Vars(r)
-	log.Println("Parsing id : ", vars["id"])
-    u := user{vars["id"], vars["fname"], vars["lname"], vars["image"], vars["group"]}
-    fmt.Println(u)
+	decoder := json.NewDecoder(r.Body)
+    var u user
+    err := decoder.Decode(&u)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(u)
+	stmt, _ := s.db.Prepare("INSERT INTO users (firstname, lastname, image) VALUES ($1, $2, $3);")
+	_, err = stmt.Exec(u.Fname, u.Lname, u.Image)
 
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
 	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+	log.Fatal(err)
 	}
-
+	/*w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u)
+	w.Write([]byte(structString))*/
 	w.Write([]byte("ok"))
 }
 
@@ -98,7 +102,7 @@ func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	for rows.Next() {
 		u := user{}
-		err := rows.Scan(&u.id, &u.fname, &u.lname, &u.image)
+		err := rows.Scan(&u.Id, &u.Fname, &u.Lname, &u.Image)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -118,16 +122,23 @@ func (s *server) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 
 // add a new event to the events table in the db
 func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var e event
+    err := decoder.Decode(&e)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(e)
+	stmt, _ := s.db.Prepare("INSERT INTO events (name, description, image, location) VALUES ($1, $2, $3, $4);")
+	_, err = stmt.Exec(e.Name, e.Description, e.Image, e.Location)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
 	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+	log.Fatal(err)
 	}
-
+	/*w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", u)
+	w.Write([]byte(structString))*/
 	w.Write([]byte("ok"))
 }
 
@@ -156,7 +167,7 @@ func (s *server) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	for rows.Next() {
 		e := event{}
-		err := rows.Scan(&e.id, &e.name, &e.description, &e.image, &e.location)
+		err := rows.Scan(&e.Id, &e.Name, &e.Description, &e.Image, &e.Location)
 		if err != nil {
 			log.Fatal(err)
 		}
