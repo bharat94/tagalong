@@ -44,6 +44,8 @@ func main() {
 
 	s := server{db: db}
 
+    s.dbsetup()
+
 	http.HandleFunc("/", s.handler)
 	http.HandleFunc("/addUser", s.handlerAddUser)
 	http.HandleFunc("/removeUser", s.handlerRemoveUser)
