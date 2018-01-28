@@ -1,0 +1,31 @@
+
+user
+
+- id
+- first name
+- last name
+- image 
+- group (pending)
+
+
+event
+
+- id
+- name
+- description
+- image
+- location
+
+event user mapping
+
+- event id
+- user id
+
+event user like mapping
+
+- event id
+- user A id 
+- user B id
+where user A likes user B
+
+
