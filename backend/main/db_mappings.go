@@ -15,3 +15,10 @@ type event struct {
 	Image string `json:"image"`
 	Location string `json:"location"`
 }
+
+type like struct {
+	LikeId string `json:"like_id,omitempty"`
+	EventId string `json:"event_id"`
+	FirstUserId string `json:"first_user_id"`
+	SecondUserId string `json:"second_user_id"`
+}

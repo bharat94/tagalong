@@ -143,7 +143,7 @@ func (s *server) handlerAddEvent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {  
 	  panic(err)
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	structString := fmt.Sprintf("%+v\n", e)
 	w.Write([]byte(structString))
@@ -239,17 +239,28 @@ func (s *server) handlerGetRemainingUsersForEvent(w http.ResponseWriter, r *http
 
 // handle a like correctly (Event, User1, User2)
 func (s *server) handleLike(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+	decoder := json.NewDecoder(r.Body)
+    var l like
+    err := decoder.Decode(&l)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+    log.Println(l)
 
-	// slow 5 seconds query
-	_, err := s.db.ExecContext(ctx, "SELECT pg_sleep(5)")
-	if err != nil {
-		log.Println("[ERROR]", err)
-		w.WriteHeader(http.StatusBadRequest)
+    sqlStatement := `  
+	INSERT INTO likes (event_id, first_user_id, second_user_id) 
+	VALUES ($1, $2, $3)  
+	RETURNING like_id`  
+
+	err = s.db.QueryRow(sqlStatement, l.EventId, l.FirstUserId, l.SecondUserId).Scan(&l.LikeId)  
+	if err != nil {  
+	  panic(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Header().Set("Content-Type", "application/json")
+	structString := fmt.Sprintf("%+v\n", l)
+	w.Write([]byte(structString))
 }
 
 // get the group (matches) for an user
